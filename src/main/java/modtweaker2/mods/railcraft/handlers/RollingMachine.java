@@ -46,14 +46,26 @@ public class RollingMachine {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     @ZenMethod
-    public static void removeRecipe(IIngredient ingredient) {
-        List<IRecipe> recipes = BaseCraftingRemoval.getRecipes(RailcraftHelper.rolling, ingredient);
+    public static void removeRecipe(IIngredient output) {
+        List<IRecipe> recipes = BaseCraftingRemoval.getRecipes(RailcraftHelper.rolling, output);
 
         if(!recipes.isEmpty()) {
             MineTweakerAPI.apply(new Remove(recipes));
         } else {
-            LogHelper.logWarning(String.format("No %s Recipes found for %s. Command ignored!", RollingMachine.name, ingredient.toString()));
+            LogHelper.logWarning(String.format("No %s Recipes found for %s. Command ignored!", RollingMachine.name, output.toString()));
         }
+    }
+
+    @ZenMethod
+    public static boolean hasRecipe(IIngredient output) {
+        return BaseCraftingRemoval.hasRecipe(RailcraftHelper.rolling, output);
+    }
+
+    @ZenMethod
+    public static void removeRecipeIfPresent(IIngredient output) {
+        List<IRecipe> recipes = BaseCraftingRemoval.getRecipes(RailcraftHelper.rolling, output);
+        if(!recipes.isEmpty())
+            MineTweakerAPI.apply(new Remove(recipes));
     }
 
     private static class Remove extends BaseCraftingRemoval {

@@ -98,6 +98,26 @@ public class RockCrusher {
 		}
 	}
 
+	@ZenMethod
+	public static boolean hasRecipe(IIngredient input) {
+		return RailcraftHelper.crusher.parallelStream()
+				.anyMatch(r -> areInputsMatch(r, input));
+	}
+
+	@ZenMethod
+	public static void removeRecipeIfPresent(IIngredient input) {
+		List<IRockCrusherRecipe> recipes = RailcraftHelper.crusher.parallelStream()
+				.filter(r -> areInputsMatch(r, input))
+				.collect(toList());
+		if(!recipes.isEmpty())
+			MineTweakerAPI.apply(new Remove(recipes));
+	}
+
+	private static boolean areInputsMatch(IRockCrusherRecipe recipe, IIngredient input) {
+		ItemStack recipeInput = recipe.getInput();
+		return recipeInput != null && matches(input, toIItemStack(recipeInput));
+	}
+
 	private static class Remove extends BaseListRemoval<IRockCrusherRecipe> {
 
 		@SuppressWarnings("unchecked")
@@ -109,25 +129,5 @@ public class RockCrusher {
 		public String getRecipeInfo(IRockCrusherRecipe recipe) {
 			return LogHelper.getStackDescription(recipe.getInput());
 		}
-	}
-
-	@ZenMethod
-	public static boolean hasRecipe(IIngredient input) {
-		return RailcraftHelper.crusher.parallelStream()
-				.anyMatch(r -> areInputsMatch(r, input));
-	}
-
-	@ZenMethod
-	public static void removeIfPresent(IIngredient input) {
-		List<IRockCrusherRecipe> recipes = RailcraftHelper.crusher.parallelStream()
-				.filter(r -> areInputsMatch(r, input))
-				.collect(toList());
-		if(!recipes.isEmpty())
-			MineTweakerAPI.apply(new Remove(recipes));
-	}
-
-	private static boolean areInputsMatch(IRockCrusherRecipe recipe, IIngredient input) {
-		ItemStack recipeInput = recipe.getInput();
-		return recipeInput != null && matches(input, toIItemStack(recipeInput));
 	}
 }

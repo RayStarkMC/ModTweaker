@@ -1,5 +1,6 @@
 package modtweaker2.mods.railcraft.handlers;
 
+import static java.util.stream.Collectors.toList;
 import static modtweaker2.helpers.InputHelper.toFluid;
 import static modtweaker2.helpers.InputHelper.toIItemStack;
 import static modtweaker2.helpers.InputHelper.toStack;
@@ -7,6 +8,7 @@ import static modtweaker2.helpers.StackHelper.matches;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import minetweaker.MineTweakerAPI;
 import minetweaker.api.item.IIngredient;
@@ -19,6 +21,7 @@ import modtweaker2.helpers.LogHelper;
 import modtweaker2.mods.railcraft.RailcraftHelper;
 import modtweaker2.utils.BaseListAddition;
 import modtweaker2.utils.BaseListRemoval;
+import net.minecraft.item.ItemStack;
 import net.minecraftforge.oredict.OreDictionary;
 import stanhebben.zenscript.annotations.ZenClass;
 import stanhebben.zenscript.annotations.ZenMethod;
@@ -71,10 +74,10 @@ public class CokeOven {
 	/**
 	 * Adds a recipe for the Coke Oven
 	 * 
-	 * @param ingredient item input
+	 * @param input item input
 	 * @param matchDamage should the recipe compare NBT Data
 	 * @param matchNBT should the recipe compare NBT Data
-	 * @param itemOutput ItemStack result
+	 * @param output ItemStack result
 	 * @param fluidOutput FluidStack result
 	 * @param cookTime time per item to process
 	 */
@@ -102,19 +105,36 @@ public class CokeOven {
 
 	@ZenMethod
 	public static void removeRecipe(IIngredient output) {
-	    List<ICokeOvenRecipe> recipes = new LinkedList<ICokeOvenRecipe>();
-	    
-        for (ICokeOvenRecipe r : RailcraftHelper.oven) {
-            if (r.getOutput() != null && matches(output, toIItemStack(r.getOutput()))) {
-                recipes.add(r);
-            }
-        }
+		List<ICokeOvenRecipe> recipes = RailcraftHelper.oven.parallelStream()
+				.filter(recipe -> areOutputsMatch(recipe, output))
+				.collect(toList());
         
         if(!recipes.isEmpty()) {
             MineTweakerAPI.apply(new Remove(recipes));
         } else {
             LogHelper.logWarning(String.format("No %s Recipe found for %s. Command ignored!", CokeOven.name, output.toString()));
         }
+	}
+
+	@ZenMethod
+	public static boolean hasRecipe(IIngredient output) {
+		return RailcraftHelper.oven.parallelStream()
+				.anyMatch(recipe -> areOutputsMatch(recipe, output));
+	}
+
+	@ZenMethod
+	public static void removeRecipeIfPresent(IIngredient output) {
+		List<ICokeOvenRecipe> recipes = RailcraftHelper.oven.parallelStream()
+				.filter(recipe -> areOutputsMatch(recipe, output))
+				.collect(toList());
+
+		if(!recipes.isEmpty())
+			MineTweakerAPI.apply(new Remove(recipes));
+	}
+
+	private static boolean areOutputsMatch(ICokeOvenRecipe recipe, IIngredient output) {
+		ItemStack recipeOutput = recipe.getOutput();
+		return recipeOutput != null && matches(output, toIItemStack(recipeOutput));
 	}
 
 	private static class Remove extends BaseListRemoval<ICokeOvenRecipe> {

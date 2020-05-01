@@ -19,7 +19,9 @@ import stanhebben.zenscript.annotations.ZenMethod;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
 import static modtweaker2.helpers.InputHelper.toIItemStack;
 import static modtweaker2.helpers.InputHelper.toStack;
 import static modtweaker2.helpers.StackHelper.matches;
@@ -87,19 +89,36 @@ public class BlastFurnace {
 			return;
 		}
 
-		List<IBlastFurnaceRecipe> recipes = new LinkedList<IBlastFurnaceRecipe>();
-
-		for (IBlastFurnaceRecipe r : RailcraftHelper.furnace) {
-			if (r != null && r.getOutput() != null && matches(output, toIItemStack(r.getOutput()))) {
-				recipes.add(r);
-			}
-		}
+		List<IBlastFurnaceRecipe> recipes = RailcraftHelper.furnace.parallelStream()
+				.filter(recipe -> areOutputsMatch(recipe, output))
+				.collect(toList());
 
 		if (!recipes.isEmpty()) {
 			MineTweakerAPI.apply(new Remove(recipes));
 		} else {
 			LogHelper.logWarning(String.format("No %s Recipe found for %s. Command ignored!", BlastFurnace.name, output.toString()));
 		}
+	}
+
+	@ZenMethod
+	public static boolean hasRecipe(IIngredient output) {
+		return RailcraftHelper.furnace.parallelStream()
+				.anyMatch(recipe -> areOutputsMatch(recipe, output));
+	}
+
+	@ZenMethod
+	public static void removeRecipeIfPresent(IIngredient output) {
+		List<IBlastFurnaceRecipe> recipes = RailcraftHelper.furnace.parallelStream()
+				.filter(recipe -> areOutputsMatch(recipe, output))
+				.collect(toList());
+
+		if(!recipes.isEmpty())
+			MineTweakerAPI.apply(new Remove(recipes));
+	}
+
+	private static boolean areOutputsMatch(IBlastFurnaceRecipe recipe, IIngredient output) {
+		ItemStack recipeOutput = recipe.getOutput();
+		return recipeOutput != null && matches(output, toIItemStack(recipeOutput));
 	}
 
 	private static class Remove extends BaseListRemoval<IBlastFurnaceRecipe> {
@@ -162,20 +181,32 @@ public class BlastFurnace {
 	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	@ZenMethod
-	public static void removeFuel(IIngredient itemInput) {
-		List<ItemStack> fuels = new LinkedList<ItemStack>();
-
-		for (ItemStack fuel : RailcraftHelper.fuels) {
-			if (StackHelper.matches(itemInput, InputHelper.toIItemStack(fuel))) {
-				fuels.add(fuel);
-			}
-		}
+	public static void removeFuel(IIngredient fuel) {
+		List<ItemStack> fuels = RailcraftHelper.fuels.parallelStream()
+				.filter(fuelRC -> StackHelper.matches(fuel, InputHelper.toIItemStack(fuelRC)))
+				.collect(toList());
 
 		if (!fuels.isEmpty()) {
 			MineTweakerAPI.apply(new RemoveFuels(fuels));
 		} else {
-			LogHelper.logWarning(String.format("No %s found for argument %s.", nameFuel, itemInput.toString()));
+			LogHelper.logWarning(String.format("No %s found for argument %s.", nameFuel, fuel.toString()));
 		}
+	}
+
+	@ZenMethod
+	public static boolean hasFuel(IIngredient fuel) {
+		return RailcraftHelper.fuels.parallelStream()
+				.anyMatch(fuelRC -> StackHelper.matches(fuel, InputHelper.toIItemStack(fuelRC)));
+	}
+
+	@ZenMethod
+	public static void removeFuelIfPresent(IIngredient fuel) {
+		List<ItemStack> fuels = RailcraftHelper.fuels.parallelStream()
+				.filter(fuelRC -> StackHelper.matches(fuel, InputHelper.toIItemStack(fuelRC)))
+				.collect(toList());
+
+		if(!fuels.isEmpty())
+			MineTweakerAPI.apply(new RemoveFuels(fuels));
 	}
 	
 	private static class RemoveFuels extends BaseListRemoval<ItemStack> {
