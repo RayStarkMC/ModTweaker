@@ -113,4 +113,17 @@ public class RockCrusher {
 			return LogHelper.getStackDescription(recipe.getInput());
 		}
 	}
+
+	@ZenMethod
+	public static boolean hasRecipe(IIngredient input) {
+		List<IRockCrusherRecipe> recipes = new LinkedList<>();
+
+		for(IRockCrusherRecipe r : RailcraftHelper.crusher) {
+			if(r.getInput() != null && matches(input, toIItemStack(r.getInput()))) {
+				recipes.add(r);
+			}
+		}
+
+		return !recipes.isEmpty();
+	}
 }
