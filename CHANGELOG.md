@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.9.7-forked (2019-05-01)
+
+**Implemented enhancements:**
+
+- Implemented additional methods for railcraft.
+
 ## [0.9.6](https://github.com/jaredlll08/ModTweaker2/tree/0.9.6) (2016-07-06)
 [Full Changelog](https://github.com/jaredlll08/ModTweaker2/compare/0.9.5...0.9.6)
 
