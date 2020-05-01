@@ -9,14 +9,15 @@ import modtweaker2.helpers.LogHelper;
 import modtweaker2.mods.railcraft.RailcraftHelper;
 import modtweaker2.utils.BaseListAddition;
 import modtweaker2.utils.BaseListRemoval;
+import net.minecraft.item.ItemStack;
 import net.minecraftforge.oredict.OreDictionary;
 import stanhebben.zenscript.annotations.Optional;
 import stanhebben.zenscript.annotations.ZenClass;
 import stanhebben.zenscript.annotations.ZenMethod;
 
-import java.util.LinkedList;
 import java.util.List;
 
+import static java.util.stream.Collectors.toList;
 import static modtweaker2.helpers.InputHelper.toIItemStack;
 import static modtweaker2.helpers.InputHelper.toStack;
 import static modtweaker2.helpers.StackHelper.matches;
@@ -86,13 +87,9 @@ public class RockCrusher {
 
 	@ZenMethod
 	public static void removeRecipe(IIngredient input) {
-		List<IRockCrusherRecipe> recipes = new LinkedList<IRockCrusherRecipe>();
-
-		for (IRockCrusherRecipe r : RailcraftHelper.crusher) {
-			if (r.getInput() != null && matches(input, toIItemStack(r.getInput()))) {
-				recipes.add(r);
-			}
-		}
+		List<IRockCrusherRecipe> recipes = RailcraftHelper.crusher.parallelStream()
+				.filter(r -> areInputsMatch(r, input))
+				.collect(toList());
 
 		if (!recipes.isEmpty()) {
 			MineTweakerAPI.apply(new Remove(recipes));
@@ -116,14 +113,21 @@ public class RockCrusher {
 
 	@ZenMethod
 	public static boolean hasRecipe(IIngredient input) {
-		List<IRockCrusherRecipe> recipes = new LinkedList<>();
+		return RailcraftHelper.crusher.parallelStream()
+				.anyMatch(r -> areInputsMatch(r, input));
+	}
 
-		for(IRockCrusherRecipe r : RailcraftHelper.crusher) {
-			if(r.getInput() != null && matches(input, toIItemStack(r.getInput()))) {
-				recipes.add(r);
-			}
-		}
+	@ZenMethod
+	public static void removeIfPresent(IIngredient input) {
+		List<IRockCrusherRecipe> recipes = RailcraftHelper.crusher.parallelStream()
+				.filter(r -> areInputsMatch(r, input))
+				.collect(toList());
+		if(!recipes.isEmpty())
+			MineTweakerAPI.apply(new Remove(recipes));
+	}
 
-		return !recipes.isEmpty();
+	private static boolean areInputsMatch(IRockCrusherRecipe recipe, IIngredient input) {
+		ItemStack recipeInput = recipe.getInput();
+		return recipeInput != null && matches(input, toIItemStack(recipeInput));
 	}
 }
